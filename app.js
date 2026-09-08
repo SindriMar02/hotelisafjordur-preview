@@ -289,10 +289,13 @@
     };
     var frameStop = function (i) {
       var b = box(i) || { x0: 0.4, x1: 0.6, y0: 0.4, y1: 0.6 }, W = stage.clientWidth, H = stage.clientHeight;
-      if (mdUp()) return frame(b, W * 0.54, H * 0.5, W * 0.92, H, 2.6, 0.24);
-      // the airport leg is 5.5 km against four short town walks: a 0.6 floor could not fit it on a
-      // phone and the frame settled on open water with no route in it at all
-      return frame(b, W / 2, H * 0.44, W, H * 0.82, 2.2, 0.16);
+      // The floor is the scale at which the sheet still COVERS the frame. A constant floor was
+      // wrong in both directions: 0.6 could not fit the 5.5 km airport leg on a phone (the frame
+      // settled on open water with no route in it), and a low constant let the sheet shrink
+      // smaller than the view and leave a void around it.
+      var cover = Math.max(W / SW, H / SH) * 1.02;
+      if (mdUp()) return frame(b, W * 0.54, H * 0.5, W * 0.92, H, 2.6, cover);
+      return frame(b, W / 2, H * 0.44, W, H * 0.82, 2.2, cover);
     };
     var frameAll = function () { var W = stage.clientWidth, H = stage.clientHeight, s = Math.max(W / SW, H / SH) * 1.02; return { x: 0, y: 0, s: s }; };
     var setIndex = function (i) {
