@@ -130,11 +130,45 @@
   /* ---- hero ---- */
   (function () {
     var hero = $('.hi-hero') || $('.hi-phero'); if (!hero) return;
-    var media = $('.hi-hero__media, .hi-phero__media', hero), paint = $('.hi-hero__paint', hero), title = $('.js-hero-title', hero);
-    ready.then(function () { requestAnimationFrame(function () { hero.classList.add('is-in'); if (media) media.classList.add('is-in'); if (paint) paint.classList.add('is-in'); if (title) title.classList.add('is-in'); }); });
+    var media = $('.hi-hero__media, .hi-phero__media', hero), title = $('.js-hero-title', hero);
+    ready.then(function () { requestAnimationFrame(function () { hero.classList.add('is-in'); if (media) media.classList.add('is-in'); if (title) title.classList.add('is-in'); }); });
     if (!hasGsap || reduce) return;
     var inner = $('.hi-hero__in, .hi-phero__in', hero);
     if (inner) gsap.to(inner, { yPercent: -18, opacity: 0.2, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: hero.classList.contains('hi-hero') ? '55% top' : 'bottom top', scrub: true } });
+  })();
+
+  /* ---- THE WATERLINE: the painted calm rises over the town as the hero scrolls.
+     One style write per frame, on one element, and both halves are transforms: the paint frame
+     translates up while its inner counter-frame translates down by the same amount, so the
+     painting never slides against the photograph underneath it. ---- */
+  (function () {
+    var hero = $('.hi-hero'), paint = $('.js-hero-paint'); if (!hero || !paint) return;
+    var inner = $('.hi-hero__paintin', paint);
+    var START = 58.2, END = -10;               // % of the stage: the shoreline, then clear of the top
+    if (reduce) { paint.style.setProperty('--wl', START + '%'); return; }
+    var stage = $('.hi-hero__stage', hero);
+    var last = -1;
+    var tick = function () {
+      var r = hero.getBoundingClientRect(); if (r.bottom < 0 || r.top > VH()) return;
+      // progress of the STICKY stage inside its own section: 0 the moment the hero is at rest,
+      // 1 when it unpins. Measuring -r.top instead started the tide part-risen, because the hero
+      // carries a negative top margin so that it sits under the bar.
+      var sr = stage.getBoundingClientRect();
+      // On desktop the hero carries a negative top margin so it sits under the bar, which means
+      // the sticky stage is ALREADY pinned by that much at scroll 0. Subtract that head start,
+      // or the tide begins part-risen and the seam does not land on the shoreline.
+      var pre = Math.max(0, -(r.top + (window.pageYOffset || 0)));
+      var travel = Math.max(1, r.height - sr.height - pre);
+      var t = clamp(((sr.top - r.top) - pre) / travel, 0, 1);
+      // ease the tide in so the first pixels of scroll do not lurch
+      var e = t * t * (3 - 2 * t);
+      var wl = (START + (END - START) * e).toFixed(2) + '%';
+      if (wl === last) return; last = wl;
+      paint.style.setProperty('--wl', wl);
+      if (inner) inner.style.transform = 'translate3d(0,calc(-1 * ' + wl + '),0)';
+    };
+    tick();
+    if (hasGsap) gsap.ticker.add(tick); else (function loop() { tick(); requestAnimationFrame(loop); })();
   })();
 
   /* ---- THE CROSSING: the postcards rise into a spread, drift past each other, gather, and the
