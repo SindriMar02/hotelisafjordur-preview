@@ -285,7 +285,11 @@
       var s = clamp(Math.min(freeW * 0.78 / bw, freeH * 0.72 / bh), sMin, sMax);
       var cx = ((b.x0 + b.x1) / 2 - 0.5) * SW, cy = ((b.y0 + b.y1) / 2 - 0.5) * SH;
       var W = stage.clientWidth, H = stage.clientHeight;
-      return { x: freeCx - W / 2 - s * cx, y: freeCy - H / 2 - s * cy, s: s };
+      var x = freeCx - W / 2 - s * cx, y = freeCy - H / 2 - s * cy;
+      // Centring on the route's midpoint can pan the sheet far enough to expose the frame's own
+      // background at an edge. Keep the pan inside the range where the sheet still covers.
+      var hx = Math.max(0, s * SW / 2 - W / 2), hy = Math.max(0, s * SH / 2 - H / 2);
+      return { x: clamp(x, -hx, hx), y: clamp(y, -hy, hy), s: s };
     };
     var frameStop = function (i) {
       var b = box(i) || { x0: 0.4, x1: 0.6, y0: 0.4, y1: 0.6 }, W = stage.clientWidth, H = stage.clientHeight;
