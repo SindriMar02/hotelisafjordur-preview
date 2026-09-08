@@ -43,7 +43,14 @@
     var load = function (img) {
       if (img.dataset.done) return; img.dataset.done = '1';
       var base = img.dataset.src, ws = img.dataset.w.split(/\s+/).map(Number);
-      var frac = clamp(img.getBoundingClientRect().width / VW(), 0.25, 1);
+      // Nearly every frame here is object-fit:cover, so the browser renders it WIDER than its box
+      // whenever the box is taller in proportion than the photograph. Sizing from the box width
+      // under-declared the whole build and the browser picked rungs for a slot half the size.
+      // The width/height attributes carry the real aspect, so derive the cover width from them.
+      var _r = img.getBoundingClientRect();
+      var _aw = +img.getAttribute('width'), _ah = +img.getAttribute('height');
+      var _cover = (_aw && _ah && _r.height) ? Math.max(_r.width, _r.height * (_aw / _ah)) : _r.width;
+      var frac = clamp(_cover / VW(), 0.25, 3);
       // A frame that is scaled down at load time (the crossing's hero plate) or drawn larger
       // than the viewport (the map sheet) must not size itself from its box, or it locks in a
       // candidate far too small for what it grows into.
@@ -137,6 +144,27 @@
     if (inner) gsap.to(inner, { yPercent: -18, opacity: 0.2, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: hero.classList.contains('hi-hero') ? '55% top' : 'bottom top', scrub: true } });
   })();
 
+  /* ---- the bar takes its glass only once the hero is behind you. DESKTOP ONLY: below 1024px
+     the mobile chrome standard applies untouched (constant bar, awning, no listener). ---- */
+  (function () {
+    var bar = $('.hi-bar'); if (!bar) return;
+    var desk = matchMedia('(min-width: 1024px)');
+    var hero = $('.hi-hero');
+    var solid = null;
+    var tick = function () {
+      if (!desk.matches) { if (solid !== null) { bar.classList.remove('is-solid'); solid = null; } return; }
+      // Clear over the landing hero only. The property pages keep the glass bar from first paint:
+      // their heroes are mid-tone photographs and an ink marque on them is not a contrast bet worth
+      // taking for a page nobody complained about.
+      var want = hero ? hero.getBoundingClientRect().bottom <= VH() * 0.6 : true;
+      if (want === solid) return; solid = want;
+      bar.classList.toggle('is-solid', want);
+    };
+    tick();
+    if (hasGsap) gsap.ticker.add(tick); else (function loop() { tick(); requestAnimationFrame(loop); })();
+    desk.addEventListener('change', function () { solid = null; tick(); });
+  })();
+
   /* ---- THE WATERLINE: the painted calm rises over the town as the hero scrolls.
      One style write per frame, on one element, and both halves are transforms: the paint frame
      translates up while its inner counter-frame translates down by the same amount, so the
@@ -144,8 +172,13 @@
   (function () {
     var hero = $('.hi-hero'), paint = $('.js-hero-paint'); if (!hero || !paint) return;
     var inner = $('.hi-hero__paintin', paint);
-    var START = 58.2, END = -10;               // % of the stage: the shoreline, then clear of the top
-    if (reduce) { paint.style.setProperty('--wl', START + '%'); return; }
+    var START = 0.582, END = -0.10;           // fraction of the stage: the shoreline, then clear of the top
+    var write = function (px, h) {
+      paint.style.setProperty('--wl', px.toFixed(1) + 'px');
+      paint.style.setProperty('--fe', (h * 0.09).toFixed(1) + 'px');
+      if (inner) inner.style.setProperty('--wl-in', px.toFixed(1) + 'px');
+    };
+    if (reduce) { var sh = ($('.hi-hero__stage', hero) || hero).getBoundingClientRect().height; write(START * sh, sh); return; }
     var stage = $('.hi-hero__stage', hero);
     var last = -1;
     var tick = function () {
@@ -162,10 +195,9 @@
       var t = clamp(((sr.top - r.top) - pre) / travel, 0, 1);
       // ease the tide in so the first pixels of scroll do not lurch
       var e = t * t * (3 - 2 * t);
-      var wl = (START + (END - START) * e).toFixed(2) + '%';
-      if (wl === last) return; last = wl;
-      paint.style.setProperty('--wl', wl);
-      if (inner) inner.style.transform = 'translate3d(0,calc(-1 * ' + wl + '),0)';
+      var px = Math.round((START + (END - START) * e) * sr.height * 10) / 10;
+      if (px === last) return; last = px;
+      write(px, sr.height);
     };
     tick();
     if (hasGsap) gsap.ticker.add(tick); else (function loop() { tick(); requestAnimationFrame(loop); })();

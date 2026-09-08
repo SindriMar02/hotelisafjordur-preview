@@ -547,16 +547,25 @@ body.hi-locked{position:fixed;width:100%}
    same amount, so the painting itself never moves relative to the photograph behind it. The soft
    edge is a mask fixed to the frame's own top, so the feather rides up with the tide. */
 .hi-hero__media > img,.hi-hero__paint img{object-position:50% 58%}
-.hi-hero__paint{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;
-  transform:translate3d(0,var(--wl,58.2%),0);will-change:transform;
-  -webkit-mask:linear-gradient(to bottom,transparent 0,#000 9%);mask:linear-gradient(to bottom,transparent 0,#000 9%)}
-.hi-hero__paintin{position:absolute;inset:0;transform:translate3d(0,calc(-1 * var(--wl,58.2%)),0);will-change:transform}
+/* A mask's painting area is the element's own border box: with `no-repeat`, everything outside
+   that box is masked away no matter how large mask-size is. So once the frame had risen, content
+   below the frame's bottom edge vanished and the photograph showed through in a hard band. The
+   frame is therefore TWICE the stage tall and clips normally, the inner counter-frame is half of
+   that (exactly one stage) so the painting still registers to the photograph, and the tide is
+   driven in pixels so neither percentage depends on the other's height. */
+.hi-hero__paint{position:absolute;left:0;right:0;top:0;height:200%;z-index:1;pointer-events:none;overflow:hidden;
+  transform:translate3d(0,var(--wl,29.1%),0);will-change:transform;
+  -webkit-mask:linear-gradient(to bottom,transparent 0,#000 var(--fe,81px));mask:linear-gradient(to bottom,transparent 0,#000 var(--fe,81px))}
+.hi-hero__paintin{position:absolute;left:0;right:0;top:0;height:50%;transform:translate3d(0,calc(-1 * var(--wl-in,58.2%)),0);will-change:transform}
 .hi-hero__paintin > .hi-drift{position:absolute;inset:0}
 /* the paint layer is positioned and z-indexed, so the scrim and the copy must be lifted above it
    explicitly or the watercolour paints straight over both and the headline loses its ground */
 .hi-hero__scrim{z-index:2}
 .hi-hero__in{z-index:3}
-@media (prefers-reduced-motion:reduce){.hi-hero__paint,.hi-hero__paintin{transform:none}.hi-hero__paint{top:58.2%}}
+/* Reduced motion: the tide does not run (the script sets --wl once and returns), but the two
+   transforms must STILL apply, because they are what keeps the painting registered to the
+   photograph. Nulling them slid the watercolour 58% down the frame. */
+@media (prefers-reduced-motion:reduce){.hi-hero__paint{will-change:auto}.hi-hero__paintin{will-change:auto}}
 .hi-hero__eyebrow{font-family:var(--hi-display);font-weight:420;font-size:clamp(11px,.9vw,13px);letter-spacing:.24em;text-transform:uppercase;color:rgba(239,242,243,.82);margin:0 0 clamp(14px,2svh,22px);opacity:0;transform:translateY(10px);transition:opacity 1s var(--hi-e) .3s,transform 1.1s var(--hi-e) .3s}
 .hi-hero.is-in .hi-hero__eyebrow{opacity:1;transform:none}
 /* the mark: their name, set in the display face, letterspaced caps as on their own pages */
@@ -586,3 +595,18 @@ body.hi-locked{position:fixed;width:100%}
 .hi-hero__title{width:fit-content;max-width:100%}
 /* the title must fit its longest line ("and a hostel, on the square.") in ONE row at every desktop width; at 164px it wrapped to four rows and climbed over the sky */
 .hi-hero__title{font-size:clamp(44px,6.5vw,118px)}
+
+/* ---------- the bar over the hero (DESKTOP ONLY) ----------
+   [[mobile-chrome-standard]] is a hard rule and it stays: below 1024px the bar is the constant
+   glass masthead with the awning behind it, no scroll listener, no reveal. That standard came
+   from the mobile chrome problem and its awning is already desktop-only-disabled. On desktop the
+   hero tucks UNDER the bar, so an opaque bar cuts a band across a full-bleed photograph; there
+   the bar starts clear and takes its glass once you have scrolled off the hero. */
+@media (min-width:1024px){
+  .hi-bar{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom-color:transparent;
+    transition:background .5s var(--hi-e),backdrop-filter .5s var(--hi-e),border-bottom-color .5s var(--hi-e)}
+  .hi-bar.is-solid{background:rgba(239,242,243,.86);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);border-bottom-color:var(--hi-hair-2)}
+}
+@media (min-width:1024px) and (prefers-reduced-motion:reduce){.hi-bar{transition:none}}
+/* the hero CTA belongs beside the sentence it answers, not stranded at the far right edge */
+@media (min-width:768px){.hi-hero__row{grid-template-columns:minmax(0,46ch) auto;justify-content:start;column-gap:clamp(24px,3vw,48px)}}
