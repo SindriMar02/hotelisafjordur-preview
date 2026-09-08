@@ -286,7 +286,24 @@ body.hi-locked{position:fixed;width:100%}
 .hi-island__media figure{transform:scale(1.08);transition:opacity .9s var(--hi-e-soft),transform 2.6s var(--hi-e-soft)}
 .hi-island__media figure.is-on{transform:scale(1)}
 .hi-island__media figcaption{position:absolute;left:18px;bottom:16px;color:var(--hi-sea);font-size:12px;letter-spacing:.06em;text-shadow:0 1px 12px rgba(16,38,46,.6)}
-@media (max-width:899px){.hi-island__stage{display:grid}.hi-island__media{order:-1}.hi-step{grid-area:auto;opacity:1;transform:none;pointer-events:auto;padding:22px 0;border-top:1px solid var(--hi-hair-2)}.hi-island__idx{display:none}.hi-island__media figure{position:relative;height:56svh;opacity:1;transform:none}.hi-island__media figure:not(:first-child){display:none}}
+/* Below 900px the sticky split has no pin to cross-fade against, and the four figures used to
+   collapse to `figure:not(:first-child){display:none}` — so three of the four chapters lost their
+   photograph and the section read as a plain list of text. Found on device, not in emulation.
+   Instead both wrappers go `display:contents` so figures and steps land in ONE grid, and each
+   photograph is ordered directly above the step it belongs to. */
+@media (max-width:899px){
+  .hi-island__pin{height:auto}
+  .hi-island__stage{display:grid;grid-template-columns:minmax(0,1fr);position:relative;height:auto}
+  .hi-island__text,.hi-island__steps,.hi-island__media{display:contents}
+  .hi-island__idx{display:none}
+  .hi-island__media figure{position:relative;inset:auto;margin:0;height:42svh;opacity:1;transform:none;display:block}
+  .hi-island__media figure figcaption{left:var(--hi-gut)}
+  .hi-step{grid-area:auto;opacity:1;transform:none;pointer-events:auto;padding:22px var(--hi-gut) 34px}
+  .hi-island__media figure:nth-of-type(1){order:1}.hi-island__steps .hi-step:nth-of-type(1){order:2}
+  .hi-island__media figure:nth-of-type(2){order:3}.hi-island__steps .hi-step:nth-of-type(2){order:4}
+  .hi-island__media figure:nth-of-type(3){order:5}.hi-island__steps .hi-step:nth-of-type(3){order:6}
+  .hi-island__media figure:nth-of-type(4){order:7}.hi-island__steps .hi-step:nth-of-type(4){order:8}
+}
 
 /* ---------- what you get ---------- */
 .hi-facts{background:var(--hi-sea-2)}
