@@ -155,6 +155,8 @@
     if (tag && !tag.firstElementChild) tag.innerHTML = '<span>' + tag.textContent + '</span>';
     ready.then(function () { requestAnimationFrame(function () {
       hero.classList.add('is-in'); if (media) media.classList.add('is-in');
+      // the reveal is a one-off; once it has run, drop the per-letter filters and transitions
+      if (word) setTimeout(function () { word.classList.add('is-done'); }, reduce ? 0 : 2300);
     }); });
     if (!hasGsap || reduce) return;
     var inner = $('.hi-hero__in, .hi-phero__in', hero);

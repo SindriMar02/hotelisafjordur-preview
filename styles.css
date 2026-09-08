@@ -621,3 +621,13 @@ body.hi-locked{position:fixed;width:100%}
   .hi-intro__tag > span{transform:none;transition:none}
   .hi-intro__cue{opacity:1;transform:none;transition:none}
 }
+
+/* their own LOGN wordmark, the white-on-dark file from their site's brand files. It is the only
+   piece of designed identity the company has, and the hero lockup is built to its grammar:
+   display serif caps, a hairline rule, a light letterspaced line beneath. */
+.hi-logn{margin:0 0 4px}
+.hi-logn img{width:min(62vw,380px);height:auto}
+/* Once the name has arrived, take the filters and the live transitions off the letters. Sixteen
+   permanently-filtered layers inside a group whose opacity is being scrubbed is what made the
+   wordmark flicker while scrolling in WebKit. */
+.hi-hero.is-in .hi-intro__word.is-done i{filter:none;transition:none;will-change:auto}
