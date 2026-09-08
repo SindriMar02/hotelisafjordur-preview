@@ -134,14 +134,33 @@
     tick();
   })();
 
-  /* ---- hero ---- */
+  /* ---- the arrival: the name is set letter by letter over the painting, then the rule draws
+     out from the centre and the line under it rises. CSS holds the choreography; this only
+     builds the letters and fires the class once the fonts are in. ---- */
   (function () {
     var hero = $('.hi-hero') || $('.hi-phero'); if (!hero) return;
-    var media = $('.hi-hero__media, .hi-phero__media', hero), title = $('.js-hero-title', hero);
-    ready.then(function () { requestAnimationFrame(function () { hero.classList.add('is-in'); if (media) media.classList.add('is-in'); if (title) title.classList.add('is-in'); }); });
+    var media = $('.hi-hero__media, .hi-phero__media', hero);
+    var word = $('.js-intro-word', hero), tag = $('.js-intro-tag', hero);
+    if (word && word.dataset.word) {
+      // one span per WORD, letters inside it, nothing allowed to break mid-word: ÍSAFJÖRÐUR at
+      // this tracking is far too long to share a line with HÓTEL, and letting flex wrap it split
+      // the name across two lines mid-word. See icelandic-titles-break-a-display-scale.
+      var n = 0;
+      word.innerHTML = word.dataset.word.split(' ').map(function (w) {
+        return '<span class="hi-intro__w">' + w.split('').map(function (ch) {
+          return '<i style="--i:' + (n++) + '">' + ch + '</i>';
+        }).join('') + '</span>';
+      }).join('');
+    }
+    if (tag && !tag.firstElementChild) tag.innerHTML = '<span>' + tag.textContent + '</span>';
+    ready.then(function () { requestAnimationFrame(function () {
+      hero.classList.add('is-in'); if (media) media.classList.add('is-in');
+    }); });
     if (!hasGsap || reduce) return;
     var inner = $('.hi-hero__in, .hi-phero__in', hero);
-    if (inner) gsap.to(inner, { yPercent: -18, opacity: 0.2, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: hero.classList.contains('hi-hero') ? '55% top' : 'bottom top', scrub: true } });
+    // the whole lockup lifts and thins away as the stage is scrolled off; the painting stays put
+    if (inner) gsap.to(inner, { yPercent: -14, opacity: 0, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: hero.classList.contains('hi-hero') ? '58% top' : 'bottom top', scrub: true } });
+    if (media) gsap.fromTo(media, { scale: 1 }, { scale: 1.05, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } });
   })();
 
   /* ---- the bar takes its glass only once the hero is behind you. DESKTOP ONLY: below 1024px
@@ -163,44 +182,6 @@
     tick();
     if (hasGsap) gsap.ticker.add(tick); else (function loop() { tick(); requestAnimationFrame(loop); })();
     desk.addEventListener('change', function () { solid = null; tick(); });
-  })();
-
-  /* ---- THE WATERLINE: the painted calm rises over the town as the hero scrolls.
-     One style write per frame, on one element, and both halves are transforms: the paint frame
-     translates up while its inner counter-frame translates down by the same amount, so the
-     painting never slides against the photograph underneath it. ---- */
-  (function () {
-    var hero = $('.hi-hero'), paint = $('.js-hero-paint'); if (!hero || !paint) return;
-    var inner = $('.hi-hero__paintin', paint);
-    var START = 0.582, END = -0.10;           // fraction of the stage: the shoreline, then clear of the top
-    var write = function (px, h) {
-      paint.style.setProperty('--wl', px.toFixed(1) + 'px');
-      paint.style.setProperty('--fe', (h * 0.09).toFixed(1) + 'px');
-      if (inner) inner.style.setProperty('--wl-in', px.toFixed(1) + 'px');
-    };
-    if (reduce) { var sh = ($('.hi-hero__stage', hero) || hero).getBoundingClientRect().height; write(START * sh, sh); return; }
-    var stage = $('.hi-hero__stage', hero);
-    var last = -1;
-    var tick = function () {
-      var r = hero.getBoundingClientRect(); if (r.bottom < 0 || r.top > VH()) return;
-      // progress of the STICKY stage inside its own section: 0 the moment the hero is at rest,
-      // 1 when it unpins. Measuring -r.top instead started the tide part-risen, because the hero
-      // carries a negative top margin so that it sits under the bar.
-      var sr = stage.getBoundingClientRect();
-      // On desktop the hero carries a negative top margin so it sits under the bar, which means
-      // the sticky stage is ALREADY pinned by that much at scroll 0. Subtract that head start,
-      // or the tide begins part-risen and the seam does not land on the shoreline.
-      var pre = Math.max(0, -(r.top + (window.pageYOffset || 0)));
-      var travel = Math.max(1, r.height - sr.height - pre);
-      var t = clamp(((sr.top - r.top) - pre) / travel, 0, 1);
-      // ease the tide in so the first pixels of scroll do not lurch
-      var e = t * t * (3 - 2 * t);
-      var px = Math.round((START + (END - START) * e) * sr.height * 10) / 10;
-      if (px === last) return; last = px;
-      write(px, sr.height);
-    };
-    tick();
-    if (hasGsap) gsap.ticker.add(tick); else (function loop() { tick(); requestAnimationFrame(loop); })();
   })();
 
   /* ---- THE CROSSING: the postcards rise into a spread, drift past each other, gather, and the
